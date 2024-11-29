@@ -15,6 +15,7 @@ class ExcelView(QWidget):
         self.vision_control_char = '_'
         self.block_selection_change = False
         self.block_scroll_sync = False  # 防止滚动同步递归
+        self.tp_path = ""
         # 总布局为横向布局
         main_layout = QHBoxLayout(self)
 
@@ -152,8 +153,14 @@ class ExcelView(QWidget):
 
 
 
+    def on_combobox_change(self):
+        selected_item = self.right_combobox.currentText()
+        print(f"选择了：{selected_item}")
+        
+        if selected_item:
+            self.load_excel(self.right_tabs,'right',self.tp_path+selected_item)
 
-    def load_excel(self, tabs: QTabWidget, side: str, file_path = None):
+    def load_excel(self, tabs: QTabWidget, side: str, file_path=None):
         print(file_path)
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(self, f"选择 {side} Excel 文件", "", "Excel Files (*.xls *.xlsx)")
@@ -161,29 +168,37 @@ class ExcelView(QWidget):
         if file_path:
             file_name = os.path.basename(file_path)
             path = file_path[:-len(file_name)]
-            excel_vision_list = osmv.find_files_starting_with(path,file_name.split('.')[0].split(self.vision_control_char)[0],file_extension = file_name.split('.')[1])
+            self.tp_path = path
+            excel_vision_list = osmv.find_files_starting_with(path, file_name.split('.')[0].split(self.vision_control_char)[0], file_extension=file_name.split('.')[1])
+            
             xl = pd.ExcelFile(file_path, engine="openpyxl")
             tabs.clear()
+            
             for sheet_name in xl.sheet_names:
-                df = xl.parse(sheet_name)
+                df = xl.parse(sheet_name, header=None)
+                
                 if side == 'left':
                     self.df_sheets_left[sheet_name] = df
                 elif side == 'right':
                     self.df_sheets_right[sheet_name] = df
                 else:
-                    raise
+                    raise ValueError("side 参数错误，应该是 'left' 或 'right'")
+                
                 tab = QWidget()
                 tab_layout = QVBoxLayout()
                 table = QTableWidget()
                 tab_layout.addWidget(table)
                 table.setRowCount(df.shape[0])
                 table.setColumnCount(df.shape[1])
+
                 for row in range(df.shape[0]):
                     for col in range(df.shape[1]):
                         table.setItem(row, col, QTableWidgetItem(str(df.iat[row, col])))
-                table.setHorizontalHeaderLabels(df.columns)
+
+                #table.setHorizontalHeaderLabels(df.columns)
                 tab.setLayout(tab_layout)
                 tabs.addTab(tab, sheet_name)
+                
                 if side == 'left':
                     table.selectionModel().selectionChanged.connect(self.on_left_table_selection_changed)
                 elif side == 'right':
@@ -193,5 +208,5 @@ class ExcelView(QWidget):
                 self.right_combobox.clear()
                 self.right_combo_list = excel_vision_list
                 self.right_combobox.addItems(self.right_combo_list)
-                self.load_excel(self.right_tabs,'right',path+excel_vision_list[0])
+                #self.load_excel(self.right_tabs,'right',path+excel_vision_list[0])
         
