@@ -10,7 +10,6 @@ class ExcelVisualizer(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("三部分布局示例")
         self.setGeometry(100, 100, 800, 600)
 
         # 创建顶部菜单栏

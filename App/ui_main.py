@@ -6,7 +6,7 @@ from App.l1 import LeftPanel
 from App.l2 import RightPanel
 class Ui_MainWindow:
     def setupUi(self, MainWindow: QMainWindow):
-        MainWindow.setWindowTitle("PySide6 应用示例")
+        MainWindow.setWindowTitle("Excel Diff")
         MainWindow.resize(800, 600)
 
         menu_bar = CustomMenuBar(MainWindow)
