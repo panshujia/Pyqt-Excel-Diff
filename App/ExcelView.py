@@ -5,6 +5,7 @@ from PySide6.QtGui import *
 import os
 from utils import osmv
 from ExcelDiffChecker.checker import MyAlg
+import time
 
 class ExcelView(QWidget):
     def __init__(self):
@@ -14,13 +15,14 @@ class ExcelView(QWidget):
         self.right_combo_list = []
         self.vision_control_char = '_'
         self.block_selection_change = False
-        self.block_scroll_sync = False  # 防止滚动同步递归
+        self.block_scroll_sync = False
         self.tp_path = ""
         self.cache = {'xlsx':{}}
         self.common_color = QColor(255, 255, 255)
         self.diff_color = QColor(255, 0, 0)
         self.SYNC_FLAG = True
-        # 总布局为横向布局
+        
+
         main_layout = QHBoxLayout(self)
 
         # 左 ExcelView 
@@ -57,6 +59,9 @@ class ExcelView(QWidget):
         self.df_sheets_left = {}
         self.df_sheets_right = {}
 
+    def switch_sync(self):
+        self.SYNC_FLAG = not self.SYNC_FLAG
+        
     def create_vertical_line(self):
         line = QFrame(self)
         line.setFrameShape(QFrame.VLine)
@@ -81,13 +86,13 @@ class ExcelView(QWidget):
             if not hasattr(self, '_left_scroll_connected'):
                 left_table.verticalScrollBar().valueChanged.connect(self.sync_scroll_left_to_right)
                 left_table.horizontalScrollBar().valueChanged.connect(self.sync_scroll_left_to_right)
-                self._left_scroll_connected = True
+                #self._left_scroll_connected = True
 
             if not hasattr(self, '_right_scroll_connected'):
-                # 绑定垂直滚动条和水平滚动条
                 right_table.verticalScrollBar().valueChanged.connect(self.sync_scroll_right_to_left)
                 right_table.horizontalScrollBar().valueChanged.connect(self.sync_scroll_right_to_left)
-                self._right_scroll_connected = True
+                #self._right_scroll_connected = True
+
     #左右同步-----------------------------------------------------------------------------------------------------------------
     def sync_scroll_left_to_right(self):
         if not self.SYNC_FLAG:
@@ -168,7 +173,7 @@ class ExcelView(QWidget):
 
     def sync_tabs_right_to_left(self, index):
         if not self.SYNC_FLAG:
-            return
+            return  
         self.left_tabs.setCurrentIndex(index)
     #-----------------------------------------------------------------------------------------------------------------------
 
@@ -193,6 +198,7 @@ class ExcelView(QWidget):
             
             xl = pd.ExcelFile(file_path, engine="openpyxl")
             self.cache['xlsx'][side] = xl
+            #if tabs.count() > 0:
             tabs.clear()
             
             for sheet_name in xl.sheet_names:
@@ -220,6 +226,7 @@ class ExcelView(QWidget):
                 #table.setHorizontalHeaderLabels(df.columns)
                 tab.setLayout(tab_layout)
                 tabs.addTab(tab, sheet_name)
+                print(tabs.count())
                 
                 if side == 'left':
                     table.selectionModel().selectionChanged.connect(self.on_left_table_selection_changed)
@@ -244,22 +251,21 @@ class ExcelView(QWidget):
             tabs = self.right_tabs
         else:
             raise ValueError("'left' or 'right'")
-
+        cnt = 0
         for sheet_name, sheet_diff in diff.items():
-             if 'data_changes' in sheet_diff:
+            if 'data_changes' in sheet_diff:
                 diff_cells = sheet_diff['data_changes']
-                # 找到当前 tab 对应的 QTableWidget
-                tab_index = tabs.indexOf(tabs.findChild(QWidget, sheet_name))  # 根据 sheet_name 找到对应 tab
-                if tab_index != -1:
-                    table = tabs.widget(tab_index).findChild(QTableWidget)  # 获取对应 sheet 的 QTableWidget
-                    if table:
-                        # 遍历每个差异单元格并标记
-                        for change in diff_cells:
-                            row = change['row']
-                            col = change['column']
-                            item = table.item(row, col)
-                            if item:
-                                item.setBackground(QBrush(self.diff_color))
+                tab_index = tabs.indexOf(tabs.findChild(QWidget, sheet_name))
+                #if tab_index != -1:
+                table = tabs.widget(cnt).findChild(QTableWidget)
+                if table:
+                    for change in diff_cells:
+                        row = change['row']
+                        col = change['column']
+                        item = table.item(row, col)
+                        if item:
+                            item.setBackground(QBrush(self.diff_color))
+                cnt += 1
 
     def clear_marks(self):
         for tabs in [self.left_tabs, self.right_tabs]:
@@ -275,6 +281,6 @@ class ExcelView(QWidget):
                                     item.setBackground(QBrush(self.common_color))
     def compare_sheets_mark(self):
         diff = MyAlg().getSheetsdiff(self.cache['xlsx']['left'], self.cache['xlsx']['right'])
-        self.mark_diff_cells(diff, side='left')
-        self.mark_diff_cells(diff, side='right')
+        # self.mark_diff_cells(diff, side='left')
+        # self.mark_diff_cells(diff, side='right')
         return diff

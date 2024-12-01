@@ -5,5 +5,5 @@ class RightPanel(QWidget):
         super().__init__()
         # 设置右侧界面的布局
         right_layout = QVBoxLayout(self)
-        right_layout.addWidget(QPushButton("按钮X"))
-        right_layout.addWidget(QPushButton("按钮Y"))
+        right_layout.addWidget(QPushButton("todo"))
+        right_layout.addWidget(QPushButton("todo"))

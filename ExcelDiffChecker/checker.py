@@ -145,7 +145,7 @@ class MyAlg:
         for sheet_name, old_df in old_sheets.items():
             if sheet_name in new_sheets:
                 new_df = new_sheets[sheet_name]
-                print(f"比较Sheet：{sheet_name}")
+                #print(f"比较Sheet：{sheet_name}")
                 diff[sheet_name] = self.__getSheetdiff(old_df, new_df, n)
             else:
                 diff[sheet_name] = {"error": "新文件中没有该Sheet"}
@@ -159,7 +159,7 @@ class MyAlg:
         """
         使用 pandas 计算旧表和新表的差异
         """
-        print("开始分析...")
+        #print("开始分析...")
 
         lt = datetime.datetime.now()
         diff = dict()
@@ -198,8 +198,8 @@ class MyAlg:
         #         })
 
         ct = datetime.datetime.now()
-        print("cal_data_changes_done!", (ct - lt).seconds)
-        print("cal_deleted_rows_done!", (ct - lt).seconds)
+        # print("cal_data_changes_done!", (ct - lt).seconds)
+        # print("cal_deleted_rows_done!", (ct - lt).seconds)
 
         return diff 
 

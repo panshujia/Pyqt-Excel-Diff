@@ -7,12 +7,11 @@ from App.l2 import RightPanel
 class Ui_MainWindow:
     def setupUi(self, MainWindow: QMainWindow):
         MainWindow.setWindowTitle("Excel Diff")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(1920, 1080)
 
         menu_bar = CustomMenuBar(MainWindow)
         MainWindow.setMenuBar(menu_bar)
         
-        # 创建主布局，使用垂直布局来分配顶部菜单栏和下面的内容
         central_widget = QWidget(MainWindow)
         MainWindow.setCentralWidget(central_widget)
 
@@ -21,7 +20,7 @@ class Ui_MainWindow:
         main_layout = QHBoxLayout(central_widget)
 
         # left_panel
-        left_panel = LeftPanel()  # 使用左侧面板类
+        left_panel = LeftPanel(None)  # 使用左侧面板类
         main_layout.addWidget(left_panel)
 
         # 分割线1
@@ -31,12 +30,11 @@ class Ui_MainWindow:
         main_layout.addWidget(vertical_line)
 
         # ExcelView1
-        center_view = ExcelView()
-        main_layout.addWidget(center_view)
-
-        # # ExcelView2
-        # center_view_2 = ExcelView()
-        # main_layout.addWidget(center_view_2)
+        excel_view = ExcelView()
+        main_layout.addWidget(excel_view)
+        
+        # left_panel
+        left_panel.excelviewer = excel_view
 
         # 分割线2
         vertical_line_2 = QFrame(central_widget)

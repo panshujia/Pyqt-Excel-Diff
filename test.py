@@ -1,79 +1,52 @@
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenu, QLabel, QVBoxLayout, QWidget
-from PySide6.QtGui import QAction 
+import os
+import random
+import string
+import pandas as pd
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+# 生成随机单词
+def generate_random_word(length=5):
+    return ''.join(random.choices(string.ascii_lowercase, k=length))
 
-        self.setWindowTitle("顶部菜单栏示例")
-        self.setGeometry(100, 100, 800, 600)
+# 随机修改 DataFrame 中的一些单元格
+def modify_random_cells(df, num_changes=10):
+    rows, cols = df.shape
+    for _ in range(num_changes):
+        row_idx = random.randint(0, rows - 1)
+        col_idx = random.randint(0, cols - 1)
+        df.iloc[row_idx, col_idx] = generate_random_word()  # 修改为随机单词
+    return df
 
-        # 创建菜单栏
-        menu_bar = self.menuBar()
+# 扫描当前目录下的所有 .xlsx 文件并随机修改内容
+def modify_excel_files_in_directory():
+    current_dir = os.getcwd()
+    xlsx_files = [f for f in os.listdir(current_dir) if f.endswith('.xlsx')]
 
-        # 文件菜单
-        file_menu = menu_bar.addMenu("文件")
-        new_action = QAction("新建", self)
-        open_action = QAction("打开", self)
-        save_action = QAction("保存", self)
-        exit_action = QAction("退出", self)
+    for file_name in xlsx_files:
+        print(f"正在处理文件: {file_name}")
+        
+        # 读取 Excel 文件
+        xl = pd.ExcelFile(file_name, engine='openpyxl')
+        
+        # 创建一个新的 ExcelWriter 写入器
+        with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
+            # 遍历所有工作表
+            for sheet_name in xl.sheet_names:
+                df = xl.parse(sheet_name, header=None)
+                
+                # 随机修改表格中的单元格
+                modified_df = modify_random_cells(df)
+                
+                # 将修改后的 DataFrame 写入 Excel 文件
+                modified_df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
 
-        # 将动作添加到文件菜单
-        file_menu.addAction(new_action)
-        file_menu.addAction(open_action)
-        file_menu.addAction(save_action)
-        file_menu.addSeparator()  # 添加分隔符
-        file_menu.addAction(exit_action)
+            # 获取工作簿对象
+            workbook = writer.book
+            for sheet_name in xl.sheet_names:
+                sheet = workbook[sheet_name]
+                # 确保至少一个工作表是可见的
+                sheet.sheet_state = 'visible'
+        
+        print(f"文件 '{file_name}' 修改完成！")
 
-        # 编辑菜单
-        edit_menu = menu_bar.addMenu("编辑")
-        cut_action = QAction("剪切", self)
-        copy_action = QAction("复制", self)
-        paste_action = QAction("粘贴", self)
-
-        # 将动作添加到编辑菜单
-        edit_menu.addAction(cut_action)
-        edit_menu.addAction(copy_action)
-        edit_menu.addAction(paste_action)
-
-        # 帮助菜单
-        help_menu = menu_bar.addMenu("帮助")
-        about_action = QAction("关于", self)
-
-        # 将动作添加到帮助菜单
-        help_menu.addAction(about_action)
-
-        # 设置默认的中心部件
-        central_widget = QWidget()
-        layout = QVBoxLayout()
-        label = QLabel("这是中心内容区域")
-        layout.addWidget(label)
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-        # 连接动作的触发信号到槽函数
-        new_action.triggered.connect(self.new_file)
-        open_action.triggered.connect(self.open_file)
-        save_action.triggered.connect(self.save_file)
-        exit_action.triggered.connect(self.close)
-        about_action.triggered.connect(self.about)
-
-    def new_file(self):
-        print("新建文件")
-
-    def open_file(self):
-        print("打开文件")
-
-    def save_file(self):
-        print("保存文件")
-
-    def about(self):
-        print("关于菜单被点击")
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+# 调用修改 Excel 文件的函数
+modify_excel_files_in_directory()

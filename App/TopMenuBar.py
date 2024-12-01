@@ -7,9 +7,9 @@ class CustomMenuBar(QMenuBar):
 
     def init_menu(self):
         # 创建菜单
-        file_menu = self.addMenu("文件")
-        edit_menu = self.addMenu("编辑")
-        help_menu = self.addMenu("帮助")
+        file_menu = self.addMenu("todo1")
+        edit_menu = self.addMenu("todo2")
+        help_menu = self.addMenu("todo3")
 
         # 创建"文件"菜单项
         new_action = QAction("新建", self)
