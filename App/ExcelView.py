@@ -336,25 +336,25 @@ class ExcelView(QWidget):
                                 self.modified_rows.add(row_idx + 1)
                         cnt += 1
 
-                    #列新增
-                    if 'added_columns' in sheet_diff:
-                        added_columns = sheet_diff['added_columns']
-                        for col in added_columns:
-                            for row in range(table.rowCount()):
-                                item = table.item(row, col)
-                                if item:
-                                    item.setBackground(QBrush(Qt.blue))
-                        cnt += 1
+                    # #列新增
+                    # if 'added_columns' in sheet_diff:
+                    #     added_columns = sheet_diff['added_columns']
+                    #     for col in added_columns:
+                    #         for row in range(table.rowCount()):
+                    #             item = table.item(row, col)
+                    #             if item:
+                    #                 item.setBackground(QBrush(Qt.blue))
+                    #     cnt += 1
 
-                    #列删除
-                    if 'removed_columns' in sheet_diff:
-                        removed_columns = sheet_diff['removed_columns']
-                        for col in removed_columns:
-                            for row in range(table.rowCount()):
-                                item = table.item(row, col)
-                                if item:
-                                    item.setBackground(QBrush(Qt.gray))
-                        cnt += 1
+                    # #列删除
+                    # if 'removed_columns' in sheet_diff:
+                    #     removed_columns = sheet_diff['removed_columns']
+                    #     for col in removed_columns:
+                    #         for row in range(table.rowCount()):
+                    #             item = table.item(row, col)
+                    #             if item:
+                    #                 item.setBackground(QBrush(Qt.gray))
+                    #     cnt += 1
 
         if cnt == 0:
             print("没有差异。")
