@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
+from PySide6.QtCore import QRect
 import os
 from utils import osmv
 from ExcelDiffChecker.checker import DiffAlg, id
@@ -21,9 +22,9 @@ class ExcelView(QWidget):
         self.common_color = QColor(255, 255, 255)
         self.diff_color = QColor(255, 0, 0)
         self.SYNC_FLAG = True
-        
-
+        self.ONLY_SHOW_MODIFIED = True
         main_layout = QHBoxLayout(self)
+        self.modified_rows = set()
 
         # 左 ExcelView 
         self.left_excel_view = QWidget(self)
@@ -92,6 +93,7 @@ class ExcelView(QWidget):
                 right_table.verticalScrollBar().valueChanged.connect(self.sync_scroll_right_to_left)
                 right_table.horizontalScrollBar().valueChanged.connect(self.sync_scroll_right_to_left)
                 #self._right_scroll_connected = True
+    #缩略图同步------------------------------------------------------------------------------------------------------------------
 
     #左右同步-----------------------------------------------------------------------------------------------------------------
     def sync_scroll_left_to_right(self):
@@ -109,9 +111,8 @@ class ExcelView(QWidget):
 
         right_table.verticalScrollBar().setValue(left_vertical_scroll_value)
         right_table.horizontalScrollBar().setValue(left_horizontal_scroll_value)
-
         self.block_scroll_sync = False
-
+        
     def sync_scroll_right_to_left(self):
         if not self.SYNC_FLAG:
             return
@@ -127,7 +128,6 @@ class ExcelView(QWidget):
 
         left_table.verticalScrollBar().setValue(right_vertical_scroll_value)
         left_table.horizontalScrollBar().setValue(right_horizontal_scroll_value)
-
         self.block_scroll_sync = False
 
 
@@ -176,8 +176,6 @@ class ExcelView(QWidget):
             return  
         self.left_tabs.setCurrentIndex(index)
     #-----------------------------------------------------------------------------------------------------------------------
-
-
     def on_combobox_change(self):
         selected_item = self.right_combobox.currentText()
         print(f"选择了：{selected_item}")
@@ -200,7 +198,6 @@ class ExcelView(QWidget):
             self.cache['xlsx'][side] = xl
             #if tabs.count() > 0:
             tabs.clear()
-            
             for sheet_name in xl.sheet_names:
                 df = xl.parse(sheet_name, header=None)
                 
@@ -222,7 +219,7 @@ class ExcelView(QWidget):
                 for row in range(df.shape[0]):
                     for col in range(df.shape[1]):
                         table.setItem(row, col, QTableWidgetItem(str(df.iat[row, col])))
-
+                        #self.left_cell_state_cache.append(row, col, 'normal')
                 #table.setHorizontalHeaderLabels(df.columns)
                 tab.setLayout(tab_layout)
                 tabs.addTab(tab, sheet_name)
@@ -244,32 +241,7 @@ class ExcelView(QWidget):
                 self.mark_diff_cells(diff_cells, side='left')
                 self.mark_diff_cells(diff_cells, side='right')
         
-    # def mark_diff_cells(self, diff, side='left'):
-    #     if side == 'left':
-    #         tabs = self.left_tabs
-    #     elif side == 'right':
-    #         tabs = self.right_tabs
-    #     else:
-    #         raise ValueError("'left' or 'right'")
-    #     cnt = 0
-    #     for sheet_name, sheet_diff in diff.items():
-    #         if 'data_changes' in sheet_diff:
-    #             diff_cells = sheet_diff['data_changes']
-    #             tab_index = tabs.indexOf(tabs.findChild(QWidget, sheet_name))
-    #             if tab_index != -1:
-    #                 table = tabs.widget(tab_index).findChild(QTableWidget)
-    #                 if table:
-    #                     for change in diff_cells:
-    #                         row = change['row']
-    #                         col = change['column']
-    #                         item = table.item(row, col)
-    #                         if item:
-    #                             item.setBackground(QBrush(self.diff_color))
-    #             cnt += 1
     def mark_diff_cells(self, diff, side='left'):
-        """
-        标记差异单元格，分别标记新增行、删除行、修改的单元格、新增列、删除列、新增的sheet和删除的sheet。
-        """
         if side == 'left':
             tabs = self.left_tabs
         elif side == 'right':
@@ -306,8 +278,6 @@ class ExcelView(QWidget):
                         table.setStyleSheet("background-color: lightcoral;")
                 cnt += 1
         # ------------------------------------------------------------------------------------------------------
-
-
         for sheet_name, sheet_diff in diff.items():
             tab_index = tabs.indexOf(tabs.findChild(QWidget, sheet_name))
             tab_index = 0 if tab_index == -1 else tab_index
@@ -324,6 +294,7 @@ class ExcelView(QWidget):
                                 item = table.item(row_idx + 1, col_idx)
                                 if item:
                                     item.setBackground(QBrush(Qt.green))
+                            self.modified_rows.add(row_idx + 1)
                         cnt += 1
 
                     # 行删除
@@ -337,7 +308,6 @@ class ExcelView(QWidget):
                                 if item and int(item.text()) > id_value:
                                     row_idx = i
                                     break
-                                
                             if side == 'left':
                                 table.insertRow(row_idx)
                                 col_idx = 0
@@ -351,10 +321,10 @@ class ExcelView(QWidget):
                                 item = table.item(row_idx, col)
                                 if item:
                                     item.setBackground(QBrush(Qt.red))
+                            self.modified_rows.add(row_idx)
                         cnt += 1
                     
-
-                    # 3. 修改的单元格（在left和right中的值不同）
+                    #单元格修改
                     if 'data_changes' in sheet_diff:
                         data_changes = sheet_diff['data_changes']
                         for change in data_changes:
@@ -363,26 +333,27 @@ class ExcelView(QWidget):
                             item = table.item(row_idx + 1, col)
                             if item:
                                 item.setBackground(QBrush(Qt.yellow))
+                                self.modified_rows.add(row_idx + 1)
                         cnt += 1
 
-                    # 4. 新增的列（在right中有，而在left中没有）
+                    #列新增
                     if 'added_columns' in sheet_diff:
                         added_columns = sheet_diff['added_columns']
                         for col in added_columns:
                             for row in range(table.rowCount()):
                                 item = table.item(row, col)
                                 if item:
-                                    item.setBackground(QBrush(Qt.blue))  # 将新增列标记为蓝色
+                                    item.setBackground(QBrush(Qt.blue))
                         cnt += 1
 
-                    # 5. 删除的列（在left中有，而在right中没有）
+                    #列删除
                     if 'removed_columns' in sheet_diff:
                         removed_columns = sheet_diff['removed_columns']
                         for col in removed_columns:
                             for row in range(table.rowCount()):
                                 item = table.item(row, col)
                                 if item:
-                                    item.setBackground(QBrush(Qt.gray))  # 将删除列标记为灰色
+                                    item.setBackground(QBrush(Qt.gray))
                         cnt += 1
 
         if cnt == 0:

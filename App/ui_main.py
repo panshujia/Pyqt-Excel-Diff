@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt
 from App.ExcelView import ExcelView
 from App.l1 import LeftPanel
 from App.l2 import RightPanel
+#$from App.thumbnail import ExcelThumbnailView
 class Ui_MainWindow:
     def setupUi(self, MainWindow: QMainWindow):
         MainWindow.setWindowTitle("Excel Diff")
@@ -20,7 +21,7 @@ class Ui_MainWindow:
         main_layout = QHBoxLayout(central_widget)
 
         # left_panel
-        left_panel = LeftPanel(None)  # 使用左侧面板类
+        left_panel = LeftPanel(None)
         main_layout.addWidget(left_panel)
 
         # 分割线1
@@ -43,6 +44,10 @@ class Ui_MainWindow:
         main_layout.addWidget(vertical_line_2)
 
         # right_panel
-        right_panel = RightPanel()  # 使用右侧面板类
-        main_layout.addWidget(right_panel)
+        # thumbnail_view = ExcelThumbnailView(self)
+        # thumbnail_view.parent = excel_view
+        # main_layout.addWidget(thumbnail_view)
+        # excel_view.thumbnail_view = thumbnail_view
+        # # right_panel = RightPanel()  # 使用右侧面板类
+        # main_layout.addWidget(right_panel)
 
