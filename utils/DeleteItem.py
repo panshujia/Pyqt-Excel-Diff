@@ -8,10 +8,6 @@ class DeletionItemDelegate(QItemDelegate):
         self.deleted_rows = set()  # 用于存储已删除的行索引
 
     def mark_row_deleted(self, row):
-        """
-        标记某行作为已删除
-        :param row: 行索引
-        """
         self.deleted_rows.add(row)
 
     def paint(self, painter, option, index):

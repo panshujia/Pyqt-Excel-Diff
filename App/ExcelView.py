@@ -4,7 +4,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import QRect
 import os
-from utils import osmv
+from utils import osmv, DeleteItem
 from ExcelDiffChecker.checker import DiffAlg, id
 import time
 
@@ -25,6 +25,7 @@ class ExcelView(QWidget):
         self.ONLY_SHOW_MODIFIED = True
         main_layout = QHBoxLayout(self)
         self.modified_rows = set()
+        self.showing_all_rows = True
 
         # 左 ExcelView 
         self.left_excel_view = QWidget(self)
@@ -189,6 +190,7 @@ class ExcelView(QWidget):
             file_path, _ = QFileDialog.getOpenFileName(self, f"选择 {side} Excel 文件", "", "Excel Files (*.xls *.xlsx)")
         
         if file_path:
+            self.modified_rows = set()
             file_name = os.path.basename(file_path)
             path = file_path[:-len(file_name)]
             self.tp_path = path
@@ -358,6 +360,7 @@ class ExcelView(QWidget):
 
         if cnt == 0:
             print("没有差异。")
+
     def clear_marks(self):
         for tabs in [self.left_tabs, self.right_tabs]:
             for index in range(tabs.count()):
@@ -375,3 +378,27 @@ class ExcelView(QWidget):
         # self.mark_diff_cells(diff, side='left')
         # self.mark_diff_cells(diff, side='right')
         return diff
+
+    def switch_show_mode(self):
+        if self.showing_all_rows:
+            for tabs in [self.left_tabs, self.right_tabs]:
+                for index in range(tabs.count()):
+                    tab = tabs.widget(index)
+                    if tab:
+                        table = tab.findChild(QTableWidget)
+                        if table:
+                            for row in range(table.rowCount()):
+                                if row not in self.modified_rows:
+                                    table.hideRow(row)
+        else:
+            for tabs in [self.left_tabs, self.right_tabs]:
+                for index in range(tabs.count()):
+                    tab = tabs.widget(index)
+                    if tab:
+                        table = tab.findChild(QTableWidget)
+                        if table:
+                            for row in range(table.rowCount()):
+                                if row not in self.modified_rows:
+                                    table.showRow(row)
+
+        self.showing_all_rows = not self.showing_all_rows
