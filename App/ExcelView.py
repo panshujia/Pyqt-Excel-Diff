@@ -21,6 +21,8 @@ class ExcelView(QWidget):
         self.cache = {'xlsx':{}}
         self.common_color = QColor(255, 255, 255)
         self.diff_color = QColor(255, 0, 0)
+        self.DELETED_BACKGROUND = QColor(211, 211, 211)
+        
         self.SYNC_FLAG = True
         self.ONLY_SHOW_MODIFIED = True
         main_layout = QHBoxLayout(self)
@@ -285,6 +287,8 @@ class ExcelView(QWidget):
             tab_index = 0 if tab_index == -1 else tab_index
             if tab_index != -1:
                 table = tabs.widget(tab_index).findChild(QTableWidget)
+                tp_delegate = DeleteItem.DeletionItemDelegate(table)
+                table.setItemDelegate(tp_delegate)
                 if table:
                     # 行添加
                     if 'added_rows' in sheet_diff:
@@ -319,10 +323,12 @@ class ExcelView(QWidget):
                                     col_idx += 1
                             elif side == 'right':
                                 row_idx -= 1
+                                #return
                             for col in range(table.columnCount()):
                                 item = table.item(row_idx, col)
                                 if item:
-                                    item.setBackground(QBrush(Qt.red))
+                                    #item.setBackground(QBrush(self.DELETED_BACKGROUND))
+                                    tp_delegate.mark_row_deleted(row_idx)
                             self.modified_rows.add(row_idx)
                         cnt += 1
                     
