@@ -184,7 +184,13 @@ class ExcelView(QWidget):
         print(f"选择了：{selected_item}")
         self.clear_marks()
         if selected_item:
+            tp = 0
+            if not self.showing_all_rows:
+                self.switch_show_mode()
+                tp = 1
             self.load_excel(self.right_tabs,'right',self.tp_path+selected_item)
+            if tp:
+                self.switch_show_mode()
 
     def load_excel(self, tabs: QTabWidget, side: str, file_path=None):
         print(file_path)
